@@ -60,6 +60,26 @@ ___TEMPLATE_PARAMETERS___
     ]
   },
   {
+    "type": "TEXT",
+    "name": "measurementId",
+    "displayName": "GA4 Measurement ID",
+    "simpleValueType": true,
+    "alwaysInSummary": true,
+    "help": "The site's GA4 measurement ID (<code>G-XXXXXXXXXX</code>). Its current session is sent as <code>ga_session_id</code>.",
+    "valueValidators": [
+      {
+        "type": "NON_EMPTY"
+      },
+      {
+        "type": "REGEX",
+        "args": [
+          "^G-[A-Za-z0-9]+$"
+        ],
+        "errorMessage": "Enter a GA4 measurement ID such as G-XXXXXXXXXX."
+      }
+    ]
+  },
+  {
     "type": "SELECT",
     "name": "eventType",
     "displayName": "Event",
@@ -174,22 +194,6 @@ ___TEMPLATE_PARAMETERS___
     "displayName": "Identity",
     "groupStyle": "ZIPPY_CLOSED",
     "subParams": [
-      {
-        "type": "TEXT",
-        "name": "measurementId",
-        "displayName": "GA4 Measurement ID",
-        "simpleValueType": true,
-        "help": "Optional GA4 measurement ID (<code>G-XXXXXXXXXX</code>). When set, the GA4 session ID is sent as <code>ga_session_id</code>.",
-        "valueValidators": [
-          {
-            "type": "REGEX",
-            "args": [
-              "^(G-[A-Za-z0-9]+)?$"
-            ],
-            "errorMessage": "Enter a GA4 measurement ID such as G-XXXXXXXXXX, or leave this empty."
-          }
-        ]
-      },
       {
         "type": "TEXT",
         "name": "cookieDomain",
@@ -429,7 +433,7 @@ const googleIds = () => {
 
   if (!isBlank(analytics.client_id)) ids.ga_client_id = makeString(analytics.client_id);
 
-  if (!isBlank(data.measurementId) && getType(analytics.sessions) === 'array') {
+  if (getType(analytics.sessions) === 'array') {
     const wanted = withoutGPrefix(makeString(data.measurementId));
     analytics.sessions.forEach((session) => {
       if (
@@ -1258,7 +1262,6 @@ scenarios:
         {measurement_id: 'G-ABC123', session_id: '1700000000', session_number: 4}
       ]
     };
-    mockData.measurementId = 'G-ABC123';
 
     runCode(mockData);
 
@@ -1270,14 +1273,14 @@ scenarios:
     assertThat(payload.wbraid).isEqualTo('wb-1');
     assertThat(payload.fbp).isEqualTo('fb.1.1690000000000.123456789');
     assertThat(payload.fbc).isEqualTo('fb.1.1700000000000.IwAR-click');
-- name: Click ids fall back to the URL and ga_session_id needs a measurement ID
+- name: Click ids fall back to the URL and other GA4 properties' sessions are ignored
   code: |-
     cookies.__typhoon_client_id = 'existing-id';
     cookies._fbc = 'fb.1.1690000000000.cookie-click';
     queryParams = {gclid: 'from-url', fbclid: 'IwAR-click'};
     analytics = {
       client_id: '1234567890.1690000000',
-      sessions: [{measurement_id: 'G-ABC123', session_id: '1700000000', session_number: 4}]
+      sessions: [{measurement_id: 'G-OTHER', session_id: '1700000000', session_number: 4}]
     };
 
     runCode(mockData);
@@ -1335,6 +1338,7 @@ setup: |-
   const mockData = {
     merchantId: 'TPX-TEST',
     shopId: '123456789',
+    measurementId: 'G-ABC123',
     eventType: 'page_view',
     useDataLayer: true,
     requireConsent: true
