@@ -81,7 +81,11 @@ GTM's sandboxed JavaScript can only send GET requests, and TyphoonX collects JSO
 pnpm install
 pnpm test   # template tests
 pnpm check  # helper URL and metadata.yaml are consistent with package.json
+pnpm lint   # ESLint; pnpm lint:fix to fix
+pnpm format:check  # Prettier; pnpm format:fix to fix
 ```
+
+A pre-commit hook runs ESLint and Prettier on staged files, then the template tests.
 
 ### Releasing
 
