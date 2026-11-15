@@ -75,11 +75,11 @@ GTM's sandboxed JavaScript can only send GET requests, and TyphoonX collects JSO
 
 ## Development
 
-`template.tpl` is the template as exported from the GTM Template Editor. Its tests live in the `___TESTS___` section and run in the editor's **Tests** tab. To run them locally against stand-ins for the sandbox APIs:
+`template.tpl` is the template as exported from the GTM Template Editor. Its tests live in the `___TESTS___` section and run in the editor's **Tests** tab. [Vitest](https://vitest.dev) runs them locally against stand-ins for the sandbox APIs (`test/template.test.mjs`), along with tests for the helper (`test/helper.test.mjs`):
 
 ```bash
 pnpm install
-pnpm test   # template tests
+pnpm test   # template and helper tests; pnpm test:watch to watch
 pnpm check  # helper URL and metadata.yaml are consistent with package.json
 pnpm lint   # ESLint; pnpm lint:fix to fix
 pnpm format:check  # Prettier; pnpm format:fix to fix

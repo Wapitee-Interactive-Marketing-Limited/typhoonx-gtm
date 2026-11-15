@@ -1,20 +1,18 @@
-// Runs template.tpl's ___TESTS___ scenarios in Node against stand-ins for the
-// GTM sandbox APIs, so the template can be checked without a GTM container.
-// The Template Editor's Tests tab remains the source of truth.
-//
-// Usage: node test/run-template-tests.mjs
+// Stand-ins for the GTM sandbox APIs, so template.tpl's ___TESTS___ scenarios
+// can run in Node without a GTM container. The Template Editor's Tests tab
+// remains the source of truth.
 
 import {readFileSync} from 'node:fs';
-import {fileURLToPath} from 'node:url';
-import {inspect, isDeepStrictEqual} from 'node:util';
 
-const templatePath = fileURLToPath(new URL('../template.tpl', import.meta.url));
-const template = readFileSync(templatePath, 'utf8');
+import {expect} from 'vitest';
 
-function sections(text) {
+export function readTemplate() {
+  const text = readFileSync(
+    new URL('../template.tpl', import.meta.url),
+    'utf8',
+  );
   const result = {};
-  const pattern = /^___([A-Z_]+)___$/gm;
-  const marks = [...text.matchAll(pattern)];
+  const marks = [...text.matchAll(/^___([A-Z_]+)___$/gm)];
   marks.forEach((mark, index) => {
     const start = mark.index + mark[0].length;
     const end = index + 1 < marks.length ? marks[index + 1].index : text.length;
@@ -23,14 +21,13 @@ function sections(text) {
   return result;
 }
 
-function parseTests(yaml) {
-  const lines = yaml.split('\n');
+export function parseTests(yaml) {
   const scenarios = [];
   let setup = '';
   let current = null;
   let mode = null;
 
-  for (const line of lines) {
+  for (const line of yaml.split('\n')) {
     const name = line.match(/^- name: (.+)$/);
     if (name) {
       current = {name: name[1], code: []};
@@ -69,7 +66,7 @@ const UNSUPPORTED_SYNTAX = [
   [/\bwindow\b|\bdocument\b|\bnavigator\b/, 'browser global'],
 ];
 
-function lintSandboxedJs(code) {
+export function lintSandboxedJs(code) {
   const problems = [];
   code.split('\n').forEach((line, index) => {
     const withoutStrings = line
@@ -136,36 +133,23 @@ function sandboxApis() {
   };
 }
 
-class AssertionError extends Error {}
-
-function fail(message) {
-  throw new AssertionError(message);
-}
-
 function assertThat(actual) {
-  const show = (value) => inspect(value, {depth: 6});
   return {
-    isEqualTo: (expected) =>
-      isDeepStrictEqual(actual, expected) ||
-      fail(`expected ${show(actual)} to equal ${show(expected)}`),
-    isNotEqualTo: (expected) =>
-      !isDeepStrictEqual(actual, expected) ||
-      fail(`expected ${show(actual)} not to equal ${show(expected)}`),
-    isUndefined: () =>
-      actual === undefined || fail(`expected ${show(actual)} to be undefined`),
-    isDefined: () =>
-      actual !== undefined || fail('expected value to be defined'),
-    isTrue: () =>
-      actual === true || fail(`expected ${show(actual)} to be true`),
-    isFalse: () =>
-      actual === false || fail(`expected ${show(actual)} to be false`),
-    contains: (part) =>
-      actual.includes(part) ||
-      fail(`expected ${show(actual)} to contain ${show(part)}`),
+    isEqualTo: (expected) => expect(actual).toStrictEqual(expected),
+    isNotEqualTo: (expected) => expect(actual).not.toStrictEqual(expected),
+    isUndefined: () => expect(actual).toBeUndefined(),
+    isDefined: () => expect(actual).toBeDefined(),
+    isTrue: () => expect(actual).toBe(true),
+    isFalse: () => expect(actual).toBe(false),
+    contains: (part) => expect(actual).toContain(part),
   };
 }
 
-function runScenario(code, setup, scenario) {
+function fail(message) {
+  expect.fail(message);
+}
+
+export function runScenario(code, setup, scenario) {
   const apis = sandboxApis();
   const calls = new Map();
   const record = (name) => calls.set(name, (calls.get(name) ?? 0) + 1);
@@ -190,12 +174,16 @@ function runScenario(code, setup, scenario) {
   };
 
   const assertApi = (name) => ({
-    wasCalled: () => calls.has(name) || fail(`expected ${name} to be called`),
+    wasCalled: () =>
+      expect(calls.has(name), `expected ${name} to be called`).toBe(true),
     wasNotCalled: () =>
-      !calls.has(name) || fail(`expected ${name} not to be called`),
+      expect(calls.has(name), `expected ${name} not to be called`).toBe(false),
   });
 
-  const testBody = `${setup}\n${scenario.code}`;
+  const mock = (name, impl) => {
+    apis[name] = impl;
+  };
+
   new Function(
     'mock',
     'mockObject',
@@ -203,51 +191,6 @@ function runScenario(code, setup, scenario) {
     'assertThat',
     'assertApi',
     'fail',
-    testBody,
-  )(
-    (name, impl) => {
-      apis[name] = impl;
-    },
-    (name, impl) => {
-      apis[name] = impl;
-    },
-    runCode,
-    assertThat,
-    assertApi,
-    fail,
-  );
+    `${setup}\n${scenario.code}`,
+  )(mock, mock, runCode, assertThat, assertApi, fail);
 }
-
-const parts = sections(template);
-let failures = 0;
-
-for (const name of ['INFO', 'TEMPLATE_PARAMETERS', 'WEB_PERMISSIONS']) {
-  try {
-    JSON.parse(parts[name]);
-  } catch (error) {
-    failures += 1;
-    console.error(`✗ ___${name}___ is not valid JSON: ${error.message}`);
-  }
-}
-
-const code = parts.SANDBOXED_JS_FOR_WEB_TEMPLATE;
-const lint = lintSandboxedJs(code);
-if (lint.length > 0) {
-  failures += 1;
-  console.error('✗ Sandboxed JS uses unsupported syntax:');
-  lint.forEach((problem) => console.error(`    ${problem}`));
-}
-
-const {scenarios, setup} = parseTests(parts.TESTS);
-for (const scenario of scenarios) {
-  try {
-    runScenario(code, setup, scenario);
-    console.log(`✓ ${scenario.name}`);
-  } catch (error) {
-    failures += 1;
-    console.error(`✗ ${scenario.name}\n    ${error.message}`);
-  }
-}
-
-console.log(`\n${scenarios.length} scenarios, ${failures} failure(s)`);
-process.exitCode = failures > 0 ? 1 : 0;
