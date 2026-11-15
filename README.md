@@ -23,7 +23,7 @@ With **Use the data layer event name**, one tag covers all e-commerce events: th
 
 Page View also sends `first_visit` the first time a visitor is seen.
 
-If your site sets a Content-Security-Policy, allow `https://spell.typhoonx.io` in both `script-src` and `connect-src`.
+If your site sets a Content-Security-Policy, allow `https://cdn.jsdelivr.net` in `script-src` and `https://spell.typhoonx.io` in `connect-src`.
 
 ### Event parameters
 
@@ -65,7 +65,7 @@ By default the tag sends nothing, and writes no cookie or local storage, while C
 
 ## How events are sent
 
-GTM's sandboxed JavaScript can only send GET requests, and TyphoonX collects JSON POSTs. The tag loads a small helper, [`helper/typhoonx-gtm.js`](./helper/typhoonx-gtm.js), served from `https://spell.typhoonx.io/gtm/typhoonx-gtm.js`. The helper sends each event with `navigator.sendBeacon`, falling back to a keepalive `fetch`, and adds the browser's user agent.
+GTM's sandboxed JavaScript can only send GET requests, and TyphoonX collects JSON POSTs. The tag loads a small helper, [`helper/typhoonx-gtm.js`](./helper/typhoonx-gtm.js), served by jsDelivr from this repository at a pinned tag (`https://cdn.jsdelivr.net/gh/Wapitee-Interactive-Marketing-Limited/typhoonx-gtm@v1.0.0/helper/typhoonx-gtm.js`). The helper sends each event with `navigator.sendBeacon`, falling back to a keepalive `fetch`, and adds the browser's user agent.
 
 ## Development
 
@@ -76,6 +76,8 @@ node test/run-template-tests.mjs
 ```
 
 To release a version, commit the template, then add that commit's SHA to the top of `versions` in [`metadata.yaml`](./metadata.yaml).
+
+The helper URL is pinned to a tag, so a helper change ships in three steps: push a new tag (e.g. `v1.0.1`) on a `main` commit that contains the change, update the tag in `HELPER_URL` and in the `inject_script` permission in `template.tpl`, then release the template as above. Never move an existing tag: jsDelivr caches each version permanently.
 
 ## License
 

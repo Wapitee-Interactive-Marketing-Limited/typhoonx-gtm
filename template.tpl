@@ -263,7 +263,7 @@ const readAnalyticsStorage = require('readAnalyticsStorage');
 const setCookie = require('setCookie');
 const templateStorage = require('templateStorage');
 
-const HELPER_URL = 'https://spell.typhoonx.io/gtm/typhoonx-gtm.js';
+const HELPER_URL = 'https://cdn.jsdelivr.net/gh/Wapitee-Interactive-Marketing-Limited/typhoonx-gtm@v1.0.0/helper/typhoonx-gtm.js';
 const SEND_FUNCTION = 'typhoonxGtmSend';
 const DEFAULT_ENDPOINT = 'https://spell.typhoonx.io/api/v1/receive';
 
@@ -975,7 +975,7 @@ ___WEB_PERMISSIONS___
             "listItem": [
               {
                 "type": 1,
-                "string": "https://spell.typhoonx.io/gtm/typhoonx-gtm.js"
+                "string": "https://cdn.jsdelivr.net/gh/Wapitee-Interactive-Marketing-Limited/typhoonx-gtm@v1.0.0/helper/typhoonx-gtm.js"
               }
             ]
           }
@@ -1059,7 +1059,9 @@ scenarios:
     runCode(mockData);
 
     assertApi('gtmOnSuccess').wasCalled();
-    assertApi('injectScript').wasCalled();
+    assertThat(injectedUrls).isEqualTo([
+      'https://cdn.jsdelivr.net/gh/Wapitee-Interactive-Marketing-Limited/typhoonx-gtm@v1.0.0/helper/typhoonx-gtm.js'
+    ]);
     assertThat(sent.length).isEqualTo(2);
     assertThat(sent[0].name).isEqualTo('typhoonxGtmSend');
     assertThat(sent[0].endpoint).isEqualTo(ENDPOINT);
@@ -1354,6 +1356,7 @@ setup: |-
   const storage = {};
   const pageStorage = {};
   const cookieWrites = [];
+  const injectedUrls = [];
   const sent = [];
 
   mock('getUrl', (component) => component === 'protocol' ? 'https' : pageUrl);
@@ -1390,6 +1393,7 @@ setup: |-
     clear: () => undefined
   });
   mock('injectScript', (url, onSuccess, onFailure) => {
+    injectedUrls.push(url);
     if (helperLoads) {
       onSuccess();
     } else {
