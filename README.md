@@ -8,15 +8,15 @@ A Google Tag Manager web tag template that sends storefront e-commerce events to
 2. Create a **TyphoonX** tag. Enter your **Merchant ID** (`TPX-…`), **Shop ID** and the site's **GA4 Measurement ID** (`G-…`), whose current session is sent as `ga_session_id`.
 3. Choose an **Event** and a trigger:
 
-| Event                         | Typical trigger                                                       |
-| ----------------------------- | --------------------------------------------------------------------- |
-| Page View                     | Initialization or All Pages, plus History Change for single-page apps |
-| View Item                     | Custom Event `view_item`                                              |
-| View Item List                | Custom Event `view_item_list`                                         |
-| Add to Cart                   | Custom Event `add_to_cart`                                            |
-| Remove from Cart              | Custom Event `remove_from_cart`                                       |
-| View Cart                     | Custom Event `view_cart`                                              |
-| Search                        | Custom Event `search`                                                 |
+| Event                         | Typical trigger                                                                                                 |
+| ----------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| Page View                     | Initialization or All Pages, plus History Change for single-page apps                                           |
+| View Item                     | Custom Event `view_item`                                                                                        |
+| View Item List                | Custom Event `view_item_list`                                                                                   |
+| Add to Cart                   | Custom Event `add_to_cart`                                                                                      |
+| Remove from Cart              | Custom Event `remove_from_cart`                                                                                 |
+| View Cart                     | Custom Event `view_cart`                                                                                        |
+| Search                        | Custom Event `search`                                                                                           |
 | Use the data layer event name | Custom Event matching `^(view_item\|view_item_list\|add_to_cart\|remove_from_cart\|view_cart\|search)$` (regex) |
 
 With **Use the data layer event name**, one tag covers all e-commerce events: the event's `event` key in the data layer chooses the TyphoonX event, and unsupported event names are ignored.
@@ -37,19 +37,25 @@ dataLayer.push({
     currency: 'USD',
     value: 25,
     items: [
-      {item_id: 'SKU-1', item_name: 'Hat', item_brand: 'Acme', price: 25, quantity: 1},
+      {
+        item_id: 'SKU-1',
+        item_name: 'Hat',
+        item_brand: 'Acme',
+        price: 25,
+        quantity: 1,
+      },
     ],
   },
 });
 ```
 
-| TyphoonX field                   | Data layer key                                 | Tag field                 |
-| -------------------------------- | ---------------------------------------------- | ------------------------- |
-| `currency`                       | `ecommerce.currency`                           | Currency                  |
-| `value`                          | `ecommerce.value`                              | Value                     |
-| `items`                          | `ecommerce.items`                              | Items                     |
+| TyphoonX field                   | Data layer key                                       | Tag field                    |
+| -------------------------------- | ---------------------------------------------------- | ---------------------------- |
+| `currency`                       | `ecommerce.currency`                                 | Currency                     |
+| `value`                          | `ecommerce.value`                                    | Value                        |
+| `items`                          | `ecommerce.items`                                    | Items                        |
 | `item_list_id`, `item_list_name` | `ecommerce.item_list_id`, `ecommerce.item_list_name` | Item List ID, Item List Name |
-| `search_term`                    | `search_term`                                  | Search Term               |
+| `search_term`                    | `search_term`                                        | Search Term                  |
 
 A filled-in tag field takes precedence over the data layer. **Items** takes a variable returning an array of items with `item_id`, `item_name`, `item_brand`, `price` and `quantity`. If no value is given, it defaults to the sum of `price × quantity`.
 

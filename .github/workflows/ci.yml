@@ -24,6 +24,12 @@ jobs:
 
       - uses: ./.github/actions/setup
 
+      - name: Format
+        run: pnpm format:check
+
+      - name: Lint
+        run: pnpm lint
+
       - name: Template tests
         run: pnpm test
 
