@@ -1,0 +1,122 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - main
+
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  select-mode:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      mode: ${{ steps.select-mode.outputs.mode }}
+      version: ${{ steps.select-mode.outputs.version }}
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      # version: pending changesets need a version PR.
+      # release: package.json has a version with no tag yet (a version PR was merged).
+      - id: select-mode
+        run: |
+          version=$(node -p "require('./package.json').version")
+          changesets=$(find .changeset -maxdepth 1 -name '*.md' ! -name README.md | wc -l)
+          if [ "$changesets" -gt 0 ]; then
+            mode=version
+          elif git rev-parse -q --verify "refs/tags/v$version" >/dev/null; then
+            mode=none
+          else
+            mode=release
+          fi
+          echo "mode=$mode" >> "$GITHUB_OUTPUT"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "Mode: $mode (v$version)"
+
+  version:
+    if: needs.select-mode.outputs.mode == 'version'
+    needs: select-mode
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: ./.github/actions/setup
+
+      - uses: changesets/action/version@ae32849d5ba541f9ae29e40e22a623bc13562f51 # v2.1.2
+        with:
+          script: pnpm version-template
+          commit-message: 'chore: version template'
+          pr-title: 'chore: version template'
+
+  release:
+    if: needs.select-mode.outputs.mode == 'release'
+    needs: select-mode
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    env:
+      VERSION: ${{ needs.select-mode.outputs.version }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - uses: ./.github/actions/setup
+
+      - name: Template tests
+        run: pnpm test
+
+      - name: Release metadata
+        run: pnpm check
+
+      - name: Configure git
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+
+      # The tag must exist before metadata.yaml points the Gallery at this
+      # template, because the template loads its helper from jsDelivr at it.
+      # Each step below can be re-run after a partial failure.
+      - name: Tag
+        run: |
+          if git rev-parse -q --verify "refs/tags/v$VERSION" >/dev/null; then
+            test "$(git rev-list -n 1 "v$VERSION")" = "$(git rev-parse HEAD)"
+          else
+            git tag -a "v$VERSION" -m "v$VERSION"
+            git push origin "v$VERSION"
+          fi
+
+      # Commits on top of the latest main, so a re-run sees an existing entry.
+      - name: Add the release to metadata.yaml
+        run: |
+          git fetch origin main
+          git checkout --detach origin/main
+          node scripts/release-to-gallery.mjs --sha "$GITHUB_SHA" --version "$VERSION" --notes-file "$RUNNER_TEMP/notes.md"
+          if ! git diff --quiet metadata.yaml; then
+            git commit -m "chore: release v$VERSION to the Template Gallery" metadata.yaml
+            git push origin HEAD:main
+          fi
+
+      - name: GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view "v$VERSION" >/dev/null 2>&1 ||
+            gh release create "v$VERSION" --title "v$VERSION" --notes-file "$RUNNER_TEMP/notes.md" --verify-tag

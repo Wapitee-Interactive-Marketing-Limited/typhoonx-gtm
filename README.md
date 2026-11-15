@@ -65,19 +65,27 @@ By default the tag sends nothing, and writes no cookie or local storage, while C
 
 ## How events are sent
 
-GTM's sandboxed JavaScript can only send GET requests, and TyphoonX collects JSON POSTs. The tag loads a small helper, [`helper/typhoonx-gtm.js`](./helper/typhoonx-gtm.js), served by jsDelivr from this repository at a pinned tag (`https://cdn.jsdelivr.net/gh/Wapitee-Interactive-Marketing-Limited/typhoonx-gtm@v1.0.0/helper/typhoonx-gtm.js`). The helper sends each event with `navigator.sendBeacon`, falling back to a keepalive `fetch`, and adds the browser's user agent.
+GTM's sandboxed JavaScript can only send GET requests, and TyphoonX collects JSON POSTs. The tag loads a small helper, [`helper/typhoonx-gtm.js`](./helper/typhoonx-gtm.js), served by jsDelivr from this repository at the template's release tag (for example `https://cdn.jsdelivr.net/gh/Wapitee-Interactive-Marketing-Limited/typhoonx-gtm@v1.0.0/helper/typhoonx-gtm.js`). The helper sends each event with `navigator.sendBeacon`, falling back to a keepalive `fetch`, and adds the browser's user agent.
 
 ## Development
 
 `template.tpl` is the template as exported from the GTM Template Editor. Its tests live in the `___TESTS___` section and run in the editor's **Tests** tab. To run them locally against stand-ins for the sandbox APIs:
 
 ```bash
-node test/run-template-tests.mjs
+pnpm install
+pnpm test   # template tests
+pnpm check  # helper URL and metadata.yaml are consistent with package.json
 ```
 
-To release a version, commit the template, then add that commit's SHA to the top of `versions` in [`metadata.yaml`](./metadata.yaml).
+### Releasing
 
-The helper URL is pinned to a tag, so a helper change ships in three steps: push a new tag (e.g. `v1.0.1`) on a `main` commit that contains the change, update the tag in `HELPER_URL` and in the `inject_script` permission in `template.tpl`, then release the template as above. Never move an existing tag: jsDelivr caches each version permanently.
+Releases use [Changesets](https://github.com/changesets/changesets). `package.json`'s version is the template's version, and each release is a `v<version>` tag that the template's helper URL points at.
+
+1. In any PR that should ship, run `pnpm changeset` and commit the generated file.
+2. On merge, the release workflow opens or updates a **chore: version template** PR. It bumps `package.json`, writes `CHANGELOG.md`, and moves the helper URL in `template.tpl` to the new tag.
+3. Merging that PR releases it. The workflow tags the merge commit, adds it to the top of `versions` in [`metadata.yaml`](./metadata.yaml) with the changelog entry as its change notes, and creates a GitHub Release. The Gallery picks up the new version within a few days.
+
+Never move or delete a released tag. jsDelivr caches each version permanently, and installed templates keep loading the helper at the tag they were released with.
 
 ## License
 
