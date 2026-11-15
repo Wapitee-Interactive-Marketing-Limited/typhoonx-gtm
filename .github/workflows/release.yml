@@ -103,13 +103,14 @@ jobs:
             git push origin "v$VERSION"
           fi
 
+      # Commits on top of the latest main, so a re-run sees an existing entry.
       - name: Add the release to metadata.yaml
         run: |
-          node scripts/release-to-gallery.mjs --notes-file "$RUNNER_TEMP/notes.md"
+          git fetch origin main
+          git checkout --detach origin/main
+          node scripts/release-to-gallery.mjs --sha "$GITHUB_SHA" --version "$VERSION" --notes-file "$RUNNER_TEMP/notes.md"
           if ! git diff --quiet metadata.yaml; then
             git commit -m "chore: release v$VERSION to the Template Gallery" metadata.yaml
-            git fetch origin main
-            git rebase origin/main
             git push origin HEAD:main
           fi
 

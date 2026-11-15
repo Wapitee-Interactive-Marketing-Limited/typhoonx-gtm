@@ -1,7 +1,8 @@
-// Adds HEAD to metadata.yaml as the release of package.json's version, with
-// that version's CHANGELOG.md entry as its Gallery change notes.
+// Adds a commit to metadata.yaml as a Gallery release, with the version's
+// CHANGELOG.md entry as its change notes. Does nothing if it is already listed.
 //
-// Usage: node scripts/release-to-gallery.mjs [--notes-file <path>]
+// Usage: node scripts/release-to-gallery.mjs [--sha <commit>] [--version <x.y.z>] [--notes-file <path>]
+// --sha defaults to HEAD and --version to package.json's version.
 // --notes-file also writes the CHANGELOG entry there, for the GitHub Release.
 
 import {execFileSync} from 'node:child_process';
@@ -11,10 +12,19 @@ import {parseArgs} from 'node:util';
 import {ROOT, packageVersion} from './helper-url.mjs';
 import {addVersion, readMetadata} from './metadata.mjs';
 
-const {values} = parseArgs({options: {'notes-file': {type: 'string'}}});
+const {values} = parseArgs({
+  options: {
+    'notes-file': {type: 'string'},
+    sha: {type: 'string'},
+    version: {type: 'string'},
+  },
+});
 
-const version = packageVersion();
-const sha = execFileSync('git', ['rev-parse', 'HEAD'], {cwd: ROOT, encoding: 'utf8'}).trim();
+const version = values.version ?? packageVersion();
+const sha = execFileSync('git', ['rev-parse', '--verify', `${values.sha ?? 'HEAD'}^{commit}`], {
+  cwd: ROOT,
+  encoding: 'utf8',
+}).trim();
 
 const changelog = readFileSync(`${ROOT}/CHANGELOG.md`, 'utf8');
 const section = changelog.match(
