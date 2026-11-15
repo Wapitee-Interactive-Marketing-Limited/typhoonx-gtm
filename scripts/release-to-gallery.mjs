@@ -9,7 +9,7 @@ import {execFileSync} from 'node:child_process';
 import {readFileSync, writeFileSync} from 'node:fs';
 import {parseArgs} from 'node:util';
 
-import {ROOT, packageVersion} from './helper-url.mjs';
+import {packageVersion, ROOT} from './helper-url.mjs';
 import {addVersion, readMetadata} from './metadata.mjs';
 
 const {values} = parseArgs({
@@ -21,15 +21,24 @@ const {values} = parseArgs({
 });
 
 const version = values.version ?? packageVersion();
-const sha = execFileSync('git', ['rev-parse', '--verify', `${values.sha ?? 'HEAD'}^{commit}`], {
-  cwd: ROOT,
-  encoding: 'utf8',
-}).trim();
+const sha = execFileSync(
+  'git',
+  ['rev-parse', '--verify', `${values.sha ?? 'HEAD'}^{commit}`],
+  {
+    cwd: ROOT,
+    encoding: 'utf8',
+  },
+).trim();
 
 const changelog = readFileSync(`${ROOT}/CHANGELOG.md`, 'utf8');
-const section = changelog.match(
-  new RegExp(`^## ${version.replaceAll('.', '\\.')}$([\\s\\S]*?)(?=^## |(?![\\s\\S]))`, 'm'),
-)?.[1].trim();
+const section = changelog
+  .match(
+    new RegExp(
+      `^## ${version.replaceAll('.', '\\.')}$([\\s\\S]*?)(?=^## |(?![\\s\\S]))`,
+      'm',
+    ),
+  )?.[1]
+  .trim();
 if (!section) {
   throw new Error(`CHANGELOG.md has no "## ${version}" entry`);
 }

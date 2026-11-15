@@ -3,7 +3,12 @@
 
 import {readFileSync, writeFileSync} from 'node:fs';
 
-import {HELPER_URL_PATTERN, ROOT, helperUrl, packageVersion} from './helper-url.mjs';
+import {
+  HELPER_URL_PATTERN,
+  helperUrl,
+  packageVersion,
+  ROOT,
+} from './helper-url.mjs';
 
 const path = `${ROOT}/template.tpl`;
 const template = readFileSync(path, 'utf8');

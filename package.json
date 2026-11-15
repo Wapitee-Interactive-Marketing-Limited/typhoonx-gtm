@@ -7,8 +7,24 @@
   "scripts": {
     "changeset": "changeset",
     "check": "node scripts/check-release.mjs",
+    "format:check": "prettier --check .",
+    "format:fix": "prettier --write .",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "prepare": "husky",
     "test": "node test/run-template-tests.mjs",
     "version-template": "changeset version && node scripts/sync-helper-url.mjs"
+  },
+  "devDependencies": {
+    "@changesets/cli": "^3.0.3",
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.15.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-simple-import-sort": "^14.0.0",
+    "globals": "^17.14.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^17.6.0",
+    "prettier": "^3.10.1"
   },
   "engines": {
     "node": "24.x"
@@ -19,8 +35,5 @@
       "version": "11.17.0",
       "onFail": "download"
     }
-  },
-  "devDependencies": {
-    "@changesets/cli": "^3.0.3"
   }
 }

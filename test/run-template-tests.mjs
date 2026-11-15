@@ -6,7 +6,7 @@
 
 import {readFileSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
-import {isDeepStrictEqual, inspect} from 'node:util';
+import {inspect, isDeepStrictEqual} from 'node:util';
 
 const templatePath = fileURLToPath(new URL('../template.tpl', import.meta.url));
 const template = readFileSync(templatePath, 'utf8');
@@ -115,7 +115,8 @@ function sandboxApis() {
     },
     callInWindow: () => undefined,
     copyFromDataLayer: () => undefined,
-    generateRandom: (min, max) => min + Math.floor(Math.random() * (max - min + 1)),
+    generateRandom: (min, max) =>
+      min + Math.floor(Math.random() * (max - min + 1)),
     getCookieValues: () => [],
     getQueryParameters: () => undefined,
     getReferrerUrl: () => '',
@@ -154,11 +155,13 @@ function assertThat(actual) {
       actual === undefined || fail(`expected ${show(actual)} to be undefined`),
     isDefined: () =>
       actual !== undefined || fail('expected value to be defined'),
-    isTrue: () => actual === true || fail(`expected ${show(actual)} to be true`),
+    isTrue: () =>
+      actual === true || fail(`expected ${show(actual)} to be true`),
     isFalse: () =>
       actual === false || fail(`expected ${show(actual)} to be false`),
     contains: (part) =>
-      actual.includes(part) || fail(`expected ${show(actual)} to contain ${show(part)}`),
+      actual.includes(part) ||
+      fail(`expected ${show(actual)} to contain ${show(part)}`),
   };
 }
 

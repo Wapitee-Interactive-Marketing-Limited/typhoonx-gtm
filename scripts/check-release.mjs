@@ -4,7 +4,12 @@
 import {execFileSync} from 'node:child_process';
 import {readFileSync} from 'node:fs';
 
-import {HELPER_URL_PATTERN, ROOT, helperUrl, packageVersion} from './helper-url.mjs';
+import {
+  HELPER_URL_PATTERN,
+  helperUrl,
+  packageVersion,
+  ROOT,
+} from './helper-url.mjs';
 import {readMetadata} from './metadata.mjs';
 
 const problems = [];
@@ -13,7 +18,9 @@ const expectedUrl = helperUrl(version);
 const template = readFileSync(`${ROOT}/template.tpl`, 'utf8');
 
 if (!template.includes(`const HELPER_URL = '${expectedUrl}';`)) {
-  problems.push(`HELPER_URL in template.tpl must be ${expectedUrl} (run: node scripts/sync-helper-url.mjs)`);
+  problems.push(
+    `HELPER_URL in template.tpl must be ${expectedUrl} (run: node scripts/sync-helper-url.mjs)`,
+  );
 }
 
 const permissions = JSON.parse(
@@ -27,11 +34,14 @@ const allowedUrls =
     .find((param) => param.key === 'urls')
     ?.value.listItem.map((item) => item.string) ?? [];
 if (allowedUrls.length !== 1 || allowedUrls[0] !== expectedUrl) {
-  problems.push(`The inject_script permission must allow exactly ${expectedUrl}, not ${JSON.stringify(allowedUrls)}`);
+  problems.push(
+    `The inject_script permission must allow exactly ${expectedUrl}, not ${JSON.stringify(allowedUrls)}`,
+  );
 }
 
 for (const url of template.match(HELPER_URL_PATTERN) ?? []) {
-  if (url !== expectedUrl) problems.push(`template.tpl still references ${url}`);
+  if (url !== expectedUrl)
+    problems.push(`template.tpl still references ${url}`);
 }
 
 const git = (...args) => {
@@ -45,7 +55,8 @@ const git = (...args) => {
 
 const metadata = readMetadata();
 if (!metadata.homepage) problems.push('metadata.yaml needs a quoted homepage');
-if (!metadata.documentation) problems.push('metadata.yaml needs a quoted documentation URL');
+if (!metadata.documentation)
+  problems.push('metadata.yaml needs a quoted documentation URL');
 if (!metadata.hasVersions || metadata.shas.length === 0) {
   problems.push('metadata.yaml needs at least one entry under versions');
 }
@@ -53,7 +64,9 @@ if (!metadata.hasVersions || metadata.shas.length === 0) {
 const seen = new Set();
 for (const sha of metadata.shas) {
   if (!/^[0-9a-f]{40}$/.test(sha)) {
-    problems.push(`metadata.yaml sha ${sha} is not a full 40-character commit SHA`);
+    problems.push(
+      `metadata.yaml sha ${sha} is not a full 40-character commit SHA`,
+    );
     continue;
   }
   if (seen.has(sha)) problems.push(`metadata.yaml lists ${sha} twice`);
