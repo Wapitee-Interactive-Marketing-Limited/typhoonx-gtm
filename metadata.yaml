@@ -1,0 +1,5 @@
+homepage: "https://typhoonx.io"
+documentation: "https://github.com/Wapitee-Interactive-Marketing-Limited/typhoonx-gtm#readme"
+versions:
+  - sha: 967e2a9435edadd4c667effdff1dfa47854f0919
+    changeNotes: Initial release.
