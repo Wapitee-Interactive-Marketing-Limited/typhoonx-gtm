@@ -1,5 +1,11 @@
 # typhoonx-gtm
 
+## 1.1.0
+
+### Minor Changes
+
+- b97f282: Make **GA4 Measurement ID** optional. Without it, events are sent without `ga_session_id`.
+
 ## 1.0.1
 
 ### Patch Changes
