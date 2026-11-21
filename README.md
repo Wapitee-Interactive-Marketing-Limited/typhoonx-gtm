@@ -93,7 +93,8 @@ Releases use [Changesets](https://github.com/changesets/changesets). `package.js
 
 1. In any PR that should ship, run `pnpm changeset` and commit the generated file.
 2. On merge, the release workflow opens or updates a **chore: version template** PR. It bumps `package.json`, writes `CHANGELOG.md`, and moves the helper URL in `template.tpl` to the new tag.
-3. Merging that PR releases it. The workflow tags the merge commit, adds it to the top of `versions` in [`metadata.yaml`](./metadata.yaml) with the changelog entry as its change notes, and creates a GitHub Release. The Gallery picks up the new version within a few days.
+3. Merging that PR releases it. The workflow tags the merge commit, creates a GitHub Release, and opens a `chore: release v<version> to the Template Gallery` PR that adds the merge commit to the top of `versions` in [`metadata.yaml`](./metadata.yaml) with the changelog entry as its change notes.
+4. Merge that PR with a merge commit. The Gallery picks up the new version within a few days.
 
 Never move or delete a released tag. jsDelivr caches each version permanently, and installed templates keep loading the helper at the tag they were released with.
 

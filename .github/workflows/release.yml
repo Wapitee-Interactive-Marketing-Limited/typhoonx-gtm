@@ -71,8 +71,10 @@ jobs:
     timeout-minutes: 10
     permissions:
       contents: write
+      pull-requests: write
     env:
       VERSION: ${{ needs.select-mode.outputs.version }}
+      GH_TOKEN: ${{ github.token }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -103,20 +105,30 @@ jobs:
             git push origin "v$VERSION"
           fi
 
-      # Commits on top of the latest main, so a re-run sees an existing entry.
+      # Starts from the latest main, so a re-run after the metadata PR is merged
+      # sees an existing entry and leaves metadata.yaml unchanged.
       - name: Add the release to metadata.yaml
         run: |
           git fetch origin main
           git checkout --detach origin/main
           node scripts/release-to-gallery.mjs --sha "$GITHUB_SHA" --version "$VERSION" --notes-file "$RUNNER_TEMP/notes.md"
-          if ! git diff --quiet metadata.yaml; then
-            git commit -m "chore: release v$VERSION to the Template Gallery" metadata.yaml
-            git push origin HEAD:main
-          fi
 
       - name: GitHub Release
-        env:
-          GH_TOKEN: ${{ github.token }}
         run: |
           gh release view "v$VERSION" >/dev/null 2>&1 ||
             gh release create "v$VERSION" --title "v$VERSION" --notes-file "$RUNNER_TEMP/notes.md" --verify-tag
+
+      # main only accepts pushes from maintainers, so the Gallery entry lands
+      # through a PR. Merging it pushes to main again, where the existing tag
+      # selects mode "none".
+      - name: Open the Template Gallery PR
+        run: |
+          git diff --quiet metadata.yaml && exit 0
+          branch="release/v$VERSION-gallery"
+          title="chore: release v$VERSION to the Template Gallery"
+          git checkout -B "$branch"
+          git commit -m "$title" metadata.yaml
+          git push --force origin "$branch"
+          if [ -z "$(gh pr list --head "$branch" --state open --json number --jq '.[].number')" ]; then
+            gh pr create --base main --head "$branch" --title "$title" --body "Lists v$VERSION (\`$GITHUB_SHA\`) in \`metadata.yaml\`, so the Template Gallery picks it up. Merge with a merge commit."
+          fi
