@@ -334,9 +334,9 @@ const isoTimestamp = (millis) => {
   const days = Math.floor(millis / 86400000);
   let rest = millis - days * 86400000;
   const hours = Math.floor(rest / 3600000);
-  rest -= hours * 3600000;
+  rest = rest - hours * 3600000;
   const minutes = Math.floor(rest / 60000);
-  rest -= minutes * 60000;
+  rest = rest - minutes * 60000;
   const seconds = Math.floor(rest / 1000);
   const ms = rest - seconds * 1000;
 
@@ -361,13 +361,13 @@ const uuid = () => {
   let id = '';
   for (let i = 0; i < 36; i++) {
     if (i === 8 || i === 13 || i === 18 || i === 23) {
-      id += '-';
+      id = id + '-';
     } else if (i === 14) {
-      id += '4';
+      id = id + '4';
     } else if (i === 19) {
-      id += '89ab'.charAt(generateRandom(0, 3));
+      id = id + '89ab'.charAt(generateRandom(0, 3));
     } else {
-      id += hex.charAt(generateRandom(0, 15));
+      id = id + hex.charAt(generateRandom(0, 15));
     }
   }
   return id;
@@ -477,7 +477,7 @@ const itemsTotal = (items) => {
   items.forEach((item) => {
     const line = makeNumber(item.price) * item.quantity;
     // Sandboxed JS has no isNaN; NaN is the only value not equal to itself.
-    if (line === line) total += line;
+    if (line === line) total = total + line;
   });
   return Math.round(total * 100) / 100;
 };
