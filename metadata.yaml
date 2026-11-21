@@ -1,6 +1,9 @@
 homepage: "https://typhoonx.io"
 documentation: "https://github.com/Wapitee-Interactive-Marketing-Limited/typhoonx-gtm#readme"
 versions:
+  - sha: 8f52a593eb139be03bb4b5224711317b2a5a03b3
+    changeNotes: |2
+      - Make **GA4 Measurement ID** optional. Without it, events are sent without `ga_session_id`.
   - sha: bb668cde77d03f60ba11c05cd05ec1d843b50772
     changeNotes: |2
       - Fix the template failing to import into Google Tag Manager with "extraneous input '='". The sandboxed code used compound assignments (`+=`, `-=`), which GTM's parser does not accept.
