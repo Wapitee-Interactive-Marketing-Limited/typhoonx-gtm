@@ -53,7 +53,18 @@ export function parseTests(yaml) {
   };
 }
 
+// GTM's parser rejects these with errors like "extraneous input '='" and
+// refuses to import the template.
 const UNSUPPORTED_SYNTAX = [
+  [
+    /(?:\*\*|>>>|<<|>>|&&|\|\||\?\?|[-+*/%&|^])=/,
+    'compound assignment (write x = x + y)',
+  ],
+  [/\?\.(?!\d)/, 'optional chaining'],
+  [/\?\?/, 'nullish coalescing'],
+  [/\*\*/, 'exponentiation operator'],
+  [/\basync\b|\bawait\b/, 'async/await'],
+  [/\bfunction\s*\*|\byield\b/, 'generator'],
   [/`/, 'template literal'],
   [/\.\.\./, 'spread or rest syntax'],
   [/\btypeof\b/, 'typeof'],
@@ -70,7 +81,7 @@ export function lintSandboxedJs(code) {
   const problems = [];
   code.split('\n').forEach((line, index) => {
     const withoutStrings = line
-      .replace(/'(?:[^'\\]|\\.)*'/g, "''")
+      .replace(/'(?:[^'\\]|\\.)*'|"(?:[^"\\]|\\.)*"/g, "''")
       .replace(/\/\/.*$/, '');
     for (const [pattern, label] of UNSUPPORTED_SYNTAX) {
       if (pattern.test(withoutStrings)) {
