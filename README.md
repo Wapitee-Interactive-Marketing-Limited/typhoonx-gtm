@@ -5,7 +5,7 @@ A Google Tag Manager web tag template that sends storefront e-commerce events to
 ## Setup
 
 1. In your GTM web container, go to **Templates → Tag Templates → Search Gallery** and add **TyphoonX**. Until the template is in the gallery, import [`template.tpl`](./template.tpl) with **Templates → New → ⋮ → Import**.
-2. Create a **TyphoonX** tag. Enter your **Merchant ID** (`TPX-…`), **Shop ID** and the site's **GA4 Measurement ID** (`G-…`), whose current session is sent as `ga_session_id`.
+2. Create a **TyphoonX** tag. Enter your **Merchant ID** (`TPX-…`) and **Shop ID**. Optionally enter the site's **GA4 Measurement ID** (`G-…`): its current session is sent as `ga_session_id`, and without it no session ID is sent.
 3. Choose an **Event** and a trigger:
 
 | Event                         | Typical trigger                                                                                                 |

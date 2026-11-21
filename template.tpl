@@ -65,15 +65,12 @@ ___TEMPLATE_PARAMETERS___
     "displayName": "GA4 Measurement ID",
     "simpleValueType": true,
     "alwaysInSummary": true,
-    "help": "The site's GA4 measurement ID (<code>G-XXXXXXXXXX</code>). Its current session is sent as <code>ga_session_id</code>.",
+    "help": "Optional. The site's GA4 measurement ID (<code>G-XXXXXXXXXX</code>). Its current session is sent as <code>ga_session_id</code>; leave it blank to send no session ID.",
     "valueValidators": [
-      {
-        "type": "NON_EMPTY"
-      },
       {
         "type": "REGEX",
         "args": [
-          "^G-[A-Za-z0-9]+$"
+          "^(G-[A-Za-z0-9]+)?$"
         ],
         "errorMessage": "Enter a GA4 measurement ID such as G-XXXXXXXXXX."
       }
@@ -433,7 +430,7 @@ const googleIds = () => {
 
   if (!isBlank(analytics.client_id)) ids.ga_client_id = makeString(analytics.client_id);
 
-  if (getType(analytics.sessions) === 'array') {
+  if (!isBlank(data.measurementId) && getType(analytics.sessions) === 'array') {
     const wanted = withoutGPrefix(makeString(data.measurementId));
     analytics.sessions.forEach((session) => {
       if (
@@ -1293,6 +1290,26 @@ scenarios:
     assertThat(payload.ga_client_id).isEqualTo('1234567890.1690000000');
     assertThat(payload.ga_session_id).isUndefined();
     assertThat(payload.gbraid).isUndefined();
+- name: Without a measurement ID no GA4 session is sent
+  code: |-
+    cookies.__typhoon_client_id = 'existing-id';
+    analytics = {
+      client_id: '1234567890.1690000000',
+      sessions: [
+        {measurement_id: '', session_id: '111', session_number: 1},
+        {measurement_id: 'G-ABC123', session_id: '1700000000', session_number: 4}
+      ]
+    };
+    mockData.measurementId = '';
+
+    runCode(mockData);
+    mockData.measurementId = undefined;
+    runCode(mockData);
+
+    assertThat(sent.length).isEqualTo(2);
+    assertThat(sent[0].payload.ga_client_id).isEqualTo('1234567890.1690000000');
+    assertThat(sent[0].payload.ga_session_id).isUndefined();
+    assertThat(sent[1].payload.ga_session_id).isUndefined();
 - name: Single-page app navigations use the previous page as referrer
   code: |-
     cookies.__typhoon_client_id = 'existing-id';
