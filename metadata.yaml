@@ -1,5 +1,8 @@
 homepage: "https://typhoonx.io"
 documentation: "https://github.com/Wapitee-Interactive-Marketing-Limited/typhoonx-gtm#readme"
 versions:
+  - sha: bb668cde77d03f60ba11c05cd05ec1d843b50772
+    changeNotes: |2
+      - Fix the template failing to import into Google Tag Manager with "extraneous input '='". The sandboxed code used compound assignments (`+=`, `-=`), which GTM's parser does not accept.
   - sha: 967e2a9435edadd4c667effdff1dfa47854f0919
     changeNotes: Initial release.
